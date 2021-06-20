@@ -46,8 +46,7 @@ function initialValues(){
 		adress:"",
 		city:"",
 		state:"",
-		postalcode:"",
-		phone:"",
+		
 	
 	}
 }
