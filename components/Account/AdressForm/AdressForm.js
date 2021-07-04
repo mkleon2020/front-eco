@@ -3,19 +3,60 @@ import {Form, Button} from "semantic-ui-react";
 import {useFormik} from "formik";
 import * as Yup from "yup";
 import {toast} from "react-toastify";
+import useAuth from "../../../hooks/useAuth";
+import {createAddressApi, updateAddressApi} from "../../../api/address";
 
 
 
-export default function ChangePasswordForm(){
+export default function AddressForm(props){
+	const {setShowModal, setReloadAddresses, newAddress, address} = props;
+	const [loading, setLoading ] = useState(false);
+	const {auth, logout} = useAuth();
 
 	const formik = useFormik({
-		initialValues:initialValues(),
+		initialValues:initialValues(address),
 		validationSchema:Yup.object(validationSchema()),
 		onSubmit:  (formData) => {
-			console.log(formData);
+			newAddress  ? createAddress(formData): updateAddress(formData);
 		}
 	});
 
+	const createAddress = async (formData) => {
+		setLoading(true);
+		const formTemp = {
+			...formData,
+			users_permissions_user:auth.idUser
+		}
+		const response = await createAddressApi(formTemp,logout);
+		if(!response){
+			toast.warning("Error al crear la direccion");
+			setLoading(false);
+		}else{
+			formik.resetForm();
+			setReloadAddresses(true);
+			setLoading(false);
+			setShowModal(false);
+		}
+	}
+
+	
+	const updateAddress =  async (formData) => {
+		setLoading(true);
+		const formTemp = {
+			...formData,
+			users_permissions_user:auth.idUser,
+		}
+		const response = await updateAddressApi(address._id,formTemp,logout);
+		if(!response){
+			toast.warning("Error al crear la direccion");
+			setLoading(false);
+		}else{
+			formik.resetForm();
+			setReloadAddresses(true);
+			setLoading(false);
+			setShowModal(false);
+		}
+	}
 	return(
 		<Form onSubmit={formik.handleSubmit}>
 			<Form.Input name="title" type="text" label="Titulo de la direccion" placeholder="Titulo de la direccion" onChange={formik.handleChange} value={formik.values.title} error={formik.errors.title}   />
@@ -32,22 +73,22 @@ export default function ChangePasswordForm(){
 					<Form.Input name="phone" type="text" label="Numero de telefono" placeholder="Numero de telefono" onChange={formik.handleChange} value={formik.values.phone} error={formik.errors.phone}/>
 				</Form.Group>
 				<div className="actions">
-					<Button className="submit" > Crear Direccion</Button>
+					<Button className="submit" loading={loading} > {newAddress ? "Crear Direccion": "Actualizar Direccion" } </Button>
 				</div>
 				
 			</Form>
 	);
 }
 
-function initialValues(){
+function initialValues(address){
 	return{
-		title:"",
-		name:"",
-		adress:"",
-		city:"",
-		state:"",
-		postalcode:"",
-		phone:"",
+		title:address?.title || "",
+		name:address?.name || "",
+		adress:address?.adress || "",
+		city:address?.city || "",
+		state:address?.state || "",
+		postalcode:address?.postalcode || "",
+		phone:address?.phone || "",
 	
 	}
 }
