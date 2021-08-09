@@ -1,12 +1,15 @@
 import {useState,useEffect} from "react";
-import {Container, Grid, Menu, Icon,Label} from 'semantic-ui-react';
+import {Container, Grid, Menu, Icon} from 'semantic-ui-react';
 import Link from "next/link";
+import {map} from "lodash";
 import BasicModal from "../../Modal/BasicModal";
 import Auth from "../../Auth/Auth";
 import useAuth from "../../../hooks/useAuth";
 import {getMeApi} from "../../../api/user";
+import {getPlatformApi} from "../../../api/platform";
 
 export default function MenuWeb(){
+	const [platforms,setPlatforms] = useState([]);
 const [showModal,setShowModal] = useState(false);
 const [titleModal, setTitleModal] = useState("Iniciar Sesión");
 const [user,setUser] = useState(undefined);
@@ -18,6 +21,14 @@ useEffect(() => {
 		setUser(response);
 	})();
 },[auth]);
+
+useEffect(() => {
+	(async ()=> {
+		const response = await getPlatformApi();
+		setPlatforms(response || []);
+		console.log(response);
+	})();
+},[]);
 const onShowModal = () => setShowModal(true);
 const onCloseModal = () => setShowModal(false);
 
@@ -26,7 +37,7 @@ const onCloseModal = () => setShowModal(false);
 			<Container>
 				<Grid>
 					<Grid.Column className="menu__left" width={6}>
-						<MenuPlataforms/>
+						<MenuPlataforms platforms={platforms}/>
 					</Grid.Column>
 					<Grid.Column className="menu__right" width={10}>
 						{user !== undefined &&(
@@ -44,24 +55,18 @@ const onCloseModal = () => setShowModal(false);
 	);
 }
 
-function MenuPlataforms(){
+function MenuPlataforms(props){
+
+	const {platforms} = props;
 	return(
 		<Menu>
-			<Link href="/playstation">
-				<Menu.Item as="a">
-					PlayStation
-				</Menu.Item>
-			</Link>
-			<Link href="/xbox">
-				<Menu.Item as="a">
-					Xbox
-				</Menu.Item>
-			</Link>
-			<Link href="/swicth">
-				<Menu.Item as="a">
-					Swicth
-				</Menu.Item>
-			</Link>
+			{map (platforms, (platform) => (
+				<Link href={`/games/${platform.url}`} key={platform._id}>
+					<Menu.Item as="a" name={platform.url}>
+						{platform.title}
+					</Menu.Item>
+				</Link>
+			))}
 			
 		</Menu>
 	);
